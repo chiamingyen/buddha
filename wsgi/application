@@ -1,0 +1,137 @@
+#@+leo-ver=5-thin
+#@+node:2014pythonE.20140410091619.2086: * @file application
+#@@language python
+#@@tabwidth -4
+#@+others
+#@+node:2014pythonE.20140410091619.2087: ** buddha declarations
+
+########################### 1. 導入所需模組
+import cherrypy
+import os
+
+########################### 2. 設定近端與遠端目錄
+# 確定程式檔案所在目錄, 在 Windows 有最後的反斜線
+_curdir = os.path.join(os.getcwd(), os.path.dirname(__file__))
+file_location = "/static/buddha/"
+# 設定在雲端與近端的資料儲存目錄
+if 'OPENSHIFT_REPO_DIR' in os.environ.keys():
+    # 表示程式在雲端執行
+    download_root_dir = os.environ['OPENSHIFT_DATA_DIR']
+    data_dir = os.environ['OPENSHIFT_DATA_DIR']
+else:
+    # 表示程式在近端執行
+    download_root_dir = _curdir + "/local_data/"
+    data_dir = _curdir + "/local_data/"
+
+#@+node:2014pythonE.20140410091619.2088: ** class Buddha
+########################### 3. 建立主物件
+class Buddha(object):
+    _cp_config = {
+    # if there is no utf-8 encoding, no Chinese input available
+    'tools.encode.encoding': 'utf-8',
+    'tools.sessions.on' : True,
+    'tools.sessions.storage_type' : 'file',
+    'tools.sessions.locking' : 'explicit',
+    'tools.sessions.storage_path' : data_dir+'/tmp',
+    # session timeout is 60 minutes
+    'tools.sessions.timeout' : 60
+    }
+    
+    #@+others
+    #@+node:2014pythonE.20140410091619.2092: *3* index
+    @cherrypy.expose
+    def index(self, *args, **kwargs):
+        realpath = _curdir + file_location
+        outstring = ""
+        i = 0
+        # (path, title) and the title is the first line of file
+        mylist = []
+        for (path, dirs, files) in os.walk(realpath):
+            i += 1
+            #outstring += str(i)+":"
+            #outstring += "path:"+str(path)
+            #outstring += "directory:"+str(dirs)
+            for num in range(len(files)):
+                file = open(path+"/"+files[num], encoding="utf-8")
+                title = file.readline()
+                filename = files[num]
+                # this is not a good way to cut path, but works at this moment
+                mylist.append((path.replace(realpath, ""), filename, title))
+                # use real path of the file as URL will be good for SEO
+                #outstring += "<a href=\"/content?path="+str(path)+"&filename="+str(files[num])+"\">"+title +"</a><br />"
+        file.close()
+        total = len(mylist)
+        cherrypy.session["mylist"] = mylist
+        for num in range(total):
+            # save order of file into session
+            cherrypy.session[str(mylist[num][1])] = num
+            outstring += "<a href=\"/content?path="+str(mylist[num][0])+"&filename="+str(mylist[num][1])+"\">"+str(mylist[num][2])+"</a><br /><br />"
+            #outstring += "file:"+str(files)+"\n"
+            #outstring += "----"*10+"<br />"
+        return outstring
+    #@+node:2014pythonE.20140410091619.2094: *3* default
+    @cherrypy.expose
+    def default_void(self, attr='default', *args, **kwargs):
+        raise cherrypy.HTTPRedirect("/")
+    #@+node:2014pythonE.20140410091619.2093: *3* content
+    @cherrypy.expose
+    def content(self, path=None, filename=None):
+        css_setup = '''
+    <style type="text/css">
+      body {
+        line-height: 200%;
+        }
+    </style>
+    '''
+        realpath = _curdir + file_location+path
+        menu = ""
+        # get file order based upon filename
+        order = cherrypy.session[filename]
+        mylist = cherrypy.session["mylist"]
+        total = len(mylist)
+        if order == 0:
+            # first page
+            num = 1
+            menu= "<a href=\"/\">Index</a>&nbsp;&nbsp;&nbsp;<a href=\"/content?path="+str(mylist[num][0])+"&filename="+str(mylist[num][1])+"\">Next</a>"
+        elif order == total-1:
+            # last page
+            num = total-2
+            menu= "<a href=\"/content?path="+str(mylist[num][0])+"&filename="+str(mylist[num][1])+"\">Previous</a>&nbsp;&nbsp;&nbsp;<a href=\"/\">Index</a>"
+        else:
+            # in between
+            menu = "<a href=\"/content?path="+str(mylist[order-1][0])+"&filename="+str(mylist[order-1][1])+"\">Previous</a>&nbsp;&nbsp;&nbsp;<a href=\"/\">Index</a>&nbsp;&nbsp;&nbsp;<a href=\"/content?path="+str(mylist[order+1][0])+"&filename="+str(mylist[order+1][1])+"\">Next</a>"
+        with open(realpath+"/"+filename, encoding="utf-8") as content_file:
+            content = content_file.read()
+        return css_setup+menu+"<br />"+content+"<br />"+menu+"<br />"
+    #@-others
+    #index.exposed = True
+
+#@-others
+########################### 4. 安排啟動設定
+# 配合程式檔案所在目錄設定靜態目錄或靜態檔案
+application_conf = {'/static':{
+        'tools.staticdir.on': True,
+        'tools.staticdir.dir': _curdir+"/static"},
+        '/downloads':{
+        'tools.staticdir.on': True,
+        'tools.staticdir.dir': data_dir+"/downloads"},
+        '/images':{
+        'tools.staticdir.on': True,
+        'tools.staticdir.dir': data_dir+"/images"}
+    }
+
+########################### 5. 在近端或遠端啟動程式
+# 利用 Buddha() class 產生案例物件
+root = Buddha()
+# 假如在 os 環境變數中存在 'OPENSHIFT_REPO_DIR', 表示程式在 OpenShift 環境中執行
+if 'OPENSHIFT_REPO_DIR' in os.environ.keys():
+    # 雲端執行啟動
+    application = cherrypy.Application(root, config = application_conf)
+else:
+    # 近端執行啟動
+    '''
+    cherrypy.server.socket_port = 8083
+    cherrypy.server.socket_host = '127.0.0.1'
+    '''
+    cherrypy.quickstart(root, config = application_conf)
+#@-leo
