@@ -15,6 +15,7 @@
 <v t="2014pythonE.20140410091619.2061"><vh>@string initial_split_orientation = horizontal</vh></v>
 </v>
 <v t="2014pythonE.20140410091619.2054"><vh>Buddha 緣起</vh></v>
+<v t="2014pythonE.20140410091619.2357"><vh>修改紀錄</vh></v>
 <v t="2014pythonE.20140410091619.2085" a="E"><vh>@path wsgi</vh>
 <v t="2014pythonE.20140410091619.2086" a="E"
 expanded="2014pythonE.20140410091619.2088,"><vh>@file application</vh></v>
@@ -123,5 +124,10 @@ QLineEdit#editorLabel {
 <t tx="2014pythonE.20140410091619.2061">horizontal: body pane to the left
 vertical: body pane on the botton</t>
 <t tx="2014pythonE.20140410091619.2085"></t>
+<t tx="2014pythonE.20140410091619.2357">讓程式自動新增 tmp, downloads 與 images 目錄
+
+增加 sorted() to files, 因為在 RedHat 上不會自動 sort (在 Windows 會)
+
+在文章前後加入 &lt;p&gt; &lt;/p&gt;</t>
 </tnodes>
 </leo_file>
