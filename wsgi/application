@@ -41,7 +41,7 @@ class Buddha(object):
     #@+others
     #@+node:2014pythonE.20140410091619.2356: *3* __init__
     def __init__(self):
-        # hope to create downloads and images directories　
+        # hope to create downloads, images and tmp directories　
         if not os.path.isdir(download_root_dir+"downloads"):
             try:
                 os.makedirs(download_root_dir+"downloads")
@@ -66,10 +66,7 @@ class Buddha(object):
         # we need to walk the directory to get all the file names
         mylist = self.walkdir()
         total = len(mylist)
-        #cherrypy.session["mylist"] = mylist
         for num in range(total):
-            # save order of file into session
-            #cherrypy.session[str(mylist[num][1])] = num
             outstring += "<a href=\"/content?path="+str(mylist[num][0])+"&filename="+str(mylist[num][1])+"\">"+str(mylist[num][2])+"</a><br /><br />"
         return outstring
     #@+node:2014pythonE.20140410091619.2094: *3* default
