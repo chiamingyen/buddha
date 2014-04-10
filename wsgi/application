@@ -71,7 +71,7 @@ class Buddha(object):
         return outstring
     #@+node:2014pythonE.20140410091619.2094: *3* default
     @cherrypy.expose
-    def default_void(self, attr='default', *args, **kwargs):
+    def default(self, attr='default', *args, **kwargs):
         raise cherrypy.HTTPRedirect("/")
     #@+node:2014pythonE.20140410091619.2358: *3* walkdir
     def walkdir(self):
@@ -100,36 +100,40 @@ class Buddha(object):
         return mylist
     #@+node:2014pythonE.20140410091619.2093: *3* content
     @cherrypy.expose
-    def content(self, path=None, filename=None):
-        css_setup = '''
+    def content(self, path=None, filename=None, *args, **kwargs):
+        try:
+            css_setup = '''
     <style type="text/css">
       body {
         line-height: 200%;
         }
     </style>
     '''
-        realpath = _curdir + file_location+path
-        menu = ""
-        mylist = self.walkdir()
-        for i in range(len(mylist)):
-            list_element = mylist[i]
-            if filename in list_element:
-                order = i
-        total = len(mylist)
-        if order == 0:
-            # first page
-            num = 1
-            menu= "<a href=\"/\">Index</a>&nbsp;&nbsp;&nbsp;<a href=\"/content?path="+str(mylist[num][0])+"&filename="+str(mylist[num][1])+"\">Next</a>"
-        elif order == total-1:
-            # last page
-            num = total-2
-            menu= "<a href=\"/content?path="+str(mylist[num][0])+"&filename="+str(mylist[num][1])+"\">Previous</a>&nbsp;&nbsp;&nbsp;<a href=\"/\">Index</a>"
-        else:
-            # in between
-            menu = "<a href=\"/content?path="+str(mylist[order-1][0])+"&filename="+str(mylist[order-1][1])+"\">Previous</a>&nbsp;&nbsp;&nbsp;<a href=\"/\">Index</a>&nbsp;&nbsp;&nbsp;<a href=\"/content?path="+str(mylist[order+1][0])+"&filename="+str(mylist[order+1][1])+"\">Next</a>"
-        with open(realpath+"/"+filename, encoding="utf-8") as content_file:
-            content = content_file.read()
-        return css_setup+menu+"<br /><p><div>"+content+"</div></p><br />"+menu+"<br />"
+            order = 0
+            realpath = _curdir + file_location+path
+            menu = ""
+            mylist = self.walkdir()
+            for i in range(len(mylist)):
+                list_element = mylist[i]
+                if filename in list_element:
+                    order = i
+            total = len(mylist)
+            if order == 0:
+                # first page
+                num = 1
+                menu= "<a href=\"/\">Index</a>&nbsp;&nbsp;&nbsp;<a href=\"/content?path="+str(mylist[num][0])+"&filename="+str(mylist[num][1])+"\">Next</a>"
+            elif order == total-1:
+                # last page
+                num = total-2
+                menu= "<a href=\"/content?path="+str(mylist[num][0])+"&filename="+str(mylist[num][1])+"\">Previous</a>&nbsp;&nbsp;&nbsp;<a href=\"/\">Index</a>"
+            else:
+                # in between
+                menu = "<a href=\"/content?path="+str(mylist[order-1][0])+"&filename="+str(mylist[order-1][1])+"\">Previous</a>&nbsp;&nbsp;&nbsp;<a href=\"/\">Index</a>&nbsp;&nbsp;&nbsp;<a href=\"/content?path="+str(mylist[order+1][0])+"&filename="+str(mylist[order+1][1])+"\">Next</a>"
+            with open(realpath+"/"+filename, encoding="utf-8") as content_file:
+                content = content_file.read()
+            return css_setup+menu+"<br /><p><div>"+content+"</div></p><br />"+menu+"<br />"
+        except:
+            raise cherrypy.HTTPRedirect("/")
     #@-others
     #index.exposed = True
 
