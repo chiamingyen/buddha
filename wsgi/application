@@ -61,8 +61,9 @@ class Buddha(object):
     #@+node:2014pythonE.20140410091619.2092: *3* index
     @cherrypy.expose
     def index(self, *args, **kwargs):
-        realpath = _curdir + file_location
         outstring = ""
+        '''
+        realpath = _curdir + file_location
         i = 0
         # (path, title) and the title is the first line of file
         mylist = []
@@ -80,11 +81,13 @@ class Buddha(object):
                 # use real path of the file as URL will be good for SEO
                 #outstring += "<a href=\"/content?path="+str(path)+"&filename="+str(files[num])+"\">"+title +"</a><br />"
         file.close()
+        '''
+        mylist = self.walkdir()
         total = len(mylist)
-        cherrypy.session["mylist"] = mylist
+        #cherrypy.session["mylist"] = mylist
         for num in range(total):
             # save order of file into session
-            cherrypy.session[str(mylist[num][1])] = num
+            #cherrypy.session[str(mylist[num][1])] = num
             outstring += "<a href=\"/content?path="+str(mylist[num][0])+"&filename="+str(mylist[num][1])+"\">"+str(mylist[num][2])+"</a><br /><br />"
             #outstring += "file:"+str(files)+"\n"
             #outstring += "----"*10+"<br />"
@@ -93,13 +96,32 @@ class Buddha(object):
     @cherrypy.expose
     def default_void(self, attr='default', *args, **kwargs):
         raise cherrypy.HTTPRedirect("/")
+    #@+node:2014pythonE.20140410091619.2358: *3* walkdir
+    def walkdir(self):
+        realpath = _curdir + file_location
+        # (path, title) and the title is the first line of file
+        mylist = []
+        for (path, dirs, files) in os.walk(realpath):
+            files_sorted = sorted(files)
+            #outstring += str(i)+":"
+            #outstring += "path:"+str(path)
+            #outstring += "directory:"+str(dirs)
+            for num in range(len(files_sorted)):
+                file = open(path+"/"+files_sorted[num], encoding="utf-8")
+                title = file.readline()
+                filename = files_sorted[num]
+                # this is not a good way to cut path, but works at this moment
+                mylist.append((path.replace(realpath, ""), filename, title))
+                # use real path of the file as URL will be good for SEO
+                #outstring += "<a href=\"/content?path="+str(path)+"&filename="+str(files[num])+"\">"+title +"</a><br />"
+        file.close()
+        return mylist
     #@+node:2014pythonE.20140410091619.2093: *3* content
     @cherrypy.expose
     def content(self, path=None, filename=None):
         css_setup = '''
     <style type="text/css">
       body {
-        width: 600px;
         line-height: 200%;
         }
     </style>
@@ -107,8 +129,14 @@ class Buddha(object):
         realpath = _curdir + file_location+path
         menu = ""
         # get file order based upon filename
-        order = cherrypy.session[filename]
-        mylist = cherrypy.session["mylist"]
+        #order = cherrypy.session[filename]
+        #mylist = cherrypy.session["mylist"]
+        mylist = self.walkdir()
+        for i in range(len(mylist)):
+            list_element = mylist[i]
+            if filename in list_element:
+                order = i
+
         total = len(mylist)
         if order == 0:
             # first page

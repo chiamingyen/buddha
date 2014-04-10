@@ -128,6 +128,10 @@ vertical: body pane on the botton</t>
 
 增加 sorted() to files, 因為在 RedHat 上不會自動 sort (在 Windows 會)
 
-在文章前後加入 &lt;p&gt; &lt;/p&gt;</t>
+在文章前後加入 &lt;p&gt; &lt;/p&gt;
+
+每次 session 都將近 1mb, 無法在 OpenShift 上執行, 要將 1MB 放在記憶體中
+
+改為不使用 session</t>
 </tnodes>
 </leo_file>
