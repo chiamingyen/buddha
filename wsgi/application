@@ -8,6 +8,7 @@
 ########################### 1. 導入所需模組
 import cherrypy
 import os
+import json
 
 ########################### 2. 設定近端與遠端目錄
 # 確定程式檔案所在目錄, 在 Windows 有最後的反斜線
@@ -62,26 +63,7 @@ class Buddha(object):
     @cherrypy.expose
     def index(self, *args, **kwargs):
         outstring = ""
-        '''
-        realpath = _curdir + file_location
-        i = 0
-        # (path, title) and the title is the first line of file
-        mylist = []
-        for (path, dirs, files) in os.walk(realpath):
-            files_sorted = sorted(files)
-            #outstring += str(i)+":"
-            #outstring += "path:"+str(path)
-            #outstring += "directory:"+str(dirs)
-            for num in range(len(files_sorted)):
-                file = open(path+"/"+files_sorted[num], encoding="utf-8")
-                title = file.readline()
-                filename = files_sorted[num]
-                # this is not a good way to cut path, but works at this moment
-                mylist.append((path.replace(realpath, ""), filename, title))
-                # use real path of the file as URL will be good for SEO
-                #outstring += "<a href=\"/content?path="+str(path)+"&filename="+str(files[num])+"\">"+title +"</a><br />"
-        file.close()
-        '''
+        # we need to walk the directory to get all the file names
         mylist = self.walkdir()
         total = len(mylist)
         #cherrypy.session["mylist"] = mylist
@@ -89,8 +71,6 @@ class Buddha(object):
             # save order of file into session
             #cherrypy.session[str(mylist[num][1])] = num
             outstring += "<a href=\"/content?path="+str(mylist[num][0])+"&filename="+str(mylist[num][1])+"\">"+str(mylist[num][2])+"</a><br /><br />"
-            #outstring += "file:"+str(files)+"\n"
-            #outstring += "----"*10+"<br />"
         return outstring
     #@+node:2014pythonE.20140410091619.2094: *3* default
     @cherrypy.expose
@@ -101,20 +81,25 @@ class Buddha(object):
         realpath = _curdir + file_location
         # (path, title) and the title is the first line of file
         mylist = []
-        for (path, dirs, files) in os.walk(realpath):
-            files_sorted = sorted(files)
-            #outstring += str(i)+":"
-            #outstring += "path:"+str(path)
-            #outstring += "directory:"+str(dirs)
-            for num in range(len(files_sorted)):
-                file = open(path+"/"+files_sorted[num], encoding="utf-8")
-                title = file.readline()
-                filename = files_sorted[num]
-                # this is not a good way to cut path, but works at this moment
-                mylist.append((path.replace(realpath, ""), filename, title))
-                # use real path of the file as URL will be good for SEO
-                #outstring += "<a href=\"/content?path="+str(path)+"&filename="+str(files[num])+"\">"+title +"</a><br />"
-        file.close()
+        if os.path.isfile(data_dir+"/filelist.txt"):
+            # get mylist from filelist.txt
+            with open(data_dir+"/filelist.txt", encoding="utf-8") as json_file:
+                mylist = json.load(json_file)
+        else:
+            # walk directory and save filelist.txt
+            writefile = open(data_dir+"/filelist.txt", "w", encoding="utf-8")
+            for (path, dirs, files) in os.walk(realpath):
+                files_sorted = sorted(files)
+                for num in range(len(files_sorted)):
+                    file = open(path+"/"+files_sorted[num], encoding="utf-8")
+                    title = file.readline()
+                    filename = files_sorted[num]
+                    # this is not a good way to cut path, but works at this moment
+                    mylist.append((path.replace(realpath, ""), filename, title))
+            writefile.write(json.dumps(mylist))
+            file.close()
+            writefile.close()
+        # save content of mylist into data file
         return mylist
     #@+node:2014pythonE.20140410091619.2093: *3* content
     @cherrypy.expose
@@ -128,15 +113,11 @@ class Buddha(object):
     '''
         realpath = _curdir + file_location+path
         menu = ""
-        # get file order based upon filename
-        #order = cherrypy.session[filename]
-        #mylist = cherrypy.session["mylist"]
         mylist = self.walkdir()
         for i in range(len(mylist)):
             list_element = mylist[i]
             if filename in list_element:
                 order = i
-
         total = len(mylist)
         if order == 0:
             # first page
