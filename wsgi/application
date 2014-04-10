@@ -38,6 +38,26 @@ class Buddha(object):
     }
     
     #@+others
+    #@+node:2014pythonE.20140410091619.2356: *3* __init__
+    def __init__(self):
+        # hope to create downloads and images directories　
+        if not os.path.isdir(download_root_dir+"downloads"):
+            try:
+                os.makedirs(download_root_dir+"downloads")
+            except:
+                print("mkdir error")
+        if not os.path.isdir(download_root_dir+"images"):
+            try:
+                os.makedirs(download_root_dir+"images")
+            except:
+                print("mkdir error")
+        if not os.path.isdir(download_root_dir+"tmp"):
+            try:
+                os.makedirs(download_root_dir+"tmp")
+            except:
+                print("mkdir error")
+
+
     #@+node:2014pythonE.20140410091619.2092: *3* index
     @cherrypy.expose
     def index(self, *args, **kwargs):
@@ -47,14 +67,14 @@ class Buddha(object):
         # (path, title) and the title is the first line of file
         mylist = []
         for (path, dirs, files) in os.walk(realpath):
-            i += 1
+            files_sorted = sorted(files)
             #outstring += str(i)+":"
             #outstring += "path:"+str(path)
             #outstring += "directory:"+str(dirs)
-            for num in range(len(files)):
-                file = open(path+"/"+files[num], encoding="utf-8")
+            for num in range(len(files_sorted)):
+                file = open(path+"/"+files_sorted[num], encoding="utf-8")
                 title = file.readline()
-                filename = files[num]
+                filename = files_sorted[num]
                 # this is not a good way to cut path, but works at this moment
                 mylist.append((path.replace(realpath, ""), filename, title))
                 # use real path of the file as URL will be good for SEO
