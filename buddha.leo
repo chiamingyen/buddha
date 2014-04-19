@@ -14,7 +14,9 @@
 <v t="2014pythonE.20140410091619.2060"><vh>@data qt-gui-plugin-style-sheet</vh></v>
 <v t="2014pythonE.20140410091619.2061"><vh>@string initial_split_orientation = horizontal</vh></v>
 </v>
-<v t="2014pythonE.20140410091619.2054"><vh>Buddha 緣起</vh></v>
+<v t="2014pythonE.20140410091619.2054" a="E"><vh>Buddha 緣起</vh>
+<v t="2014pythonE.20140411082259.1644"><vh>瀏覽器檢視</vh></v>
+</v>
 <v t="2014pythonE.20140410091619.2357"><vh>修改紀錄</vh></v>
 <v t="2014pythonE.20140410091619.2085" a="E"><vh>@path wsgi</vh>
 <v t="2014pythonE.20140410091619.2086" a="E"
@@ -28,7 +30,11 @@ expanded="2014pythonE.20140410091619.2088,"><vh>@file application</vh></v>
 
 1. 直接採用從網站下載的檔案架構
 
-2. 可以直接閱讀, 可以前後翻頁.</t>
+2. 可以直接閱讀, 可以前後翻頁.
+
+2014.04.10 完成上述兩個功能要求, 原本使用 session 儲存頁面標題資料, 但是因為頁數很多, 在 OpenShift 中每個 session 值高達 1mb, 一下子竟然就吃掉幾百 mb 的硬碟空間, 導致總容量超過 1GB 的限制, 因此目前改為使用一個不到 2MB 的檔案來儲存頁面標題資料.
+
+接下來, 希望 title page 內容可以分頁, 而且可以與內容同在一個畫面, 就像 CMSimply 一樣.</t>
 <t tx="2014pythonE.20140410091619.2059"></t>
 <t tx="2014pythonE.20140410091619.2060">QSplitter::handle {
     background-color: #CAE1FF; /* lightSteelBlue1 */
@@ -124,7 +130,10 @@ QLineEdit#editorLabel {
 <t tx="2014pythonE.20140410091619.2061">horizontal: body pane to the left
 vertical: body pane on the botton</t>
 <t tx="2014pythonE.20140410091619.2085"></t>
-<t tx="2014pythonE.20140410091619.2357">讓程式自動新增 tmp, downloads 與 images 目錄
+<t tx="2014pythonE.20140410091619.2357">@language python
+
+'''
+讓程式自動新增 tmp, downloads 與 images 目錄
 
 增加 sorted() to files, 因為在 RedHat 上不會自動 sort (在 Windows 會)
 
@@ -132,6 +141,21 @@ vertical: body pane on the botton</t>
 
 每次 session 都將近 1mb, 無法在 OpenShift 上執行, 要將 1MB 放在記憶體中
 
-改為不使用 session</t>
+改為不使用 session
+
+2014.04.11 若 data 目錄下有 filelist.txt 則直接引用, 若無, 則 walk dir 建立 filelist.txt, 其中一個重要的功能是將程式中的 mylist 數列以 json 模組與硬碟中的檔案進行互動:
+'''
+
+# 將數列寫入檔案:
+
+writefile = open(data_dir+"/filelist.txt", "w", encoding="utf-8")
+writefile.write(json.dumps(mylist))
+ 
+# 從檔案取出數列:
+
+with open(data_dir+"/filelist.txt", encoding="utf-8") as json_file:
+    mylist = json.load(json_file)
+</t>
+<t tx="2014pythonE.20140411082259.1644">目前在 PC Chrome 使用最佳, 可以放大畫面, 然後頁面會配合重整, 在 ipad air 中的 Chrome 則無法達到相同的功能.</t>
 </tnodes>
 </leo_file>

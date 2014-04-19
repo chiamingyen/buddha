@@ -9,6 +9,8 @@
 import cherrypy
 import os
 import json
+# for index 分頁使用
+import math
 
 ########################### 2. 設定近端與遠端目錄
 # 確定程式檔案所在目錄, 在 Windows 有最後的反斜線
@@ -24,6 +26,12 @@ else:
     download_root_dir = _curdir + "/local_data/"
     data_dir = _curdir + "/local_data/"
 
+#@+node:no28.20140419141724.1984: ** access_list
+def access_list(mylist, starti, endi):
+    outstring = ""
+    for num in range(int(starti)-1, int(endi)):
+        outstring += "<a href=\"/content?path="+str(mylist[num][0])+"&filename="+str(mylist[num][1])+"\">"+str(mylist[num][2])+"</a><br /><br />"
+    return outstring
 #@+node:2014pythonE.20140410091619.2088: ** class Buddha
 ########################### 3. 建立主物件
 class Buddha(object):
@@ -59,15 +67,91 @@ class Buddha(object):
                 print("mkdir error")
 
 
-    #@+node:2014pythonE.20140410091619.2092: *3* index
+    #@+node:no28.20140419141724.1982: *3* index
     @cherrypy.expose
-    def index(self, *args, **kwargs):
+    def index(self, item_per_page=10, page=1, *args, **kwargs):
         outstring = ""
         # we need to walk the directory to get all the file names
         mylist = self.walkdir()
         total = len(mylist)
+        '''
+        # 原先無分頁傳送
         for num in range(total):
             outstring += "<a href=\"/content?path="+str(mylist[num][0])+"&filename="+str(mylist[num][1])+"\">"+str(mylist[num][2])+"</a><br /><br />"
+        return outstring
+        '''
+        # 準備改為分頁版本
+        total_rows = len(mylist)
+        totalpage = math.ceil(total_rows/int(item_per_page))
+        starti = int(item_per_page) * (int(page) - 1) + 1
+        endi = starti + int(item_per_page) - 1
+        notlast = False
+        if total_rows > 0:
+            outstring += "<br />"
+            if (int(page) * int(item_per_page)) < total_rows:
+                notlast = True
+            if int(page) > 1:
+                outstring += "<a href='"
+                outstring += "/?page=1&amp;item_per_page="+str(item_per_page)
+                outstring += "'><<</a> "
+                page_num = int(page) - 1
+                outstring += "<a href='"
+                outstring += "/?page="+str(page_num)+"&amp;item_per_page="+str(item_per_page)
+                outstring += "'>Previous</a> "
+            span = 10
+            for index in range(int(page)-span, int(page)+span):
+                if index>= 0 and index< totalpage:
+                    page_now = index + 1 
+                    if page_now == int(page):
+                        outstring += "<font size='+1' color='red'>"+str(page)+" </font>"
+                    else:
+                        outstring += "<a href='"
+                        outstring += "/?page="+str(page_now)+"&amp;item_per_page="+str(item_per_page)
+                        outstring += "'>"+str(page_now)+"</a> "
+
+            if notlast == True:
+                nextpage = int(page) + 1
+                outstring += " <a href='"
+                outstring += "/?page="+str(nextpage)+"&amp;item_per_page="+str(item_per_page)
+                outstring += "'>Next</a>"
+                outstring += " <a href='"
+                outstring += "/?page="+str(totalpage)+"&amp;item_per_page="+str(item_per_page)
+                outstring += "'>>></a><br /><br /><br />"
+            if (int(page) * int(item_per_page)) < total_rows:
+                notlast = True
+                outstring += access_list(mylist, starti, endi)+"<br />"
+            else:
+                outstring += "<br /><br />"
+                outstring += access_list(mylist, starti, total_rows)+"<br />"
+            if int(page) > 1:
+                outstring += "<a href='"
+                outstring += "/?page=1&amp;item_per_page="+str(item_per_page)
+                outstring += "'><<</a> "
+                page_num = int(page) - 1
+                outstring += "<a href='"
+                outstring += "/?page="+str(page_num)+"&amp;item_per_page="+str(item_per_page)
+                outstring += "'>Previous</a> "
+            span = 10
+            for index in range(int(page)-span, int(page)+span):
+                if index >=0 and index < totalpage:
+                    page_now = index + 1
+                    if page_now == int(page):
+                        outstring += "<font size='+1' color='red'>"+str(page)+" </font>"
+                    else:
+                        outstring += "<a href='"
+                        outstring += "/?page="+str(page_now)+"&amp;item_per_page="+str(item_per_page)
+                        outstring += "'>"+str(page_now)+"</a> "
+            if notlast == True:
+                nextpage = int(page) + 1
+                outstring += " <a href='"
+                outstring += "/?page="+str(nextpage)+"&amp;item_per_page="+str(item_per_page)
+                outstring += "'>Next</a>"
+                outstring += " <a href='"
+                outstring += "/?page="+str(totalpage)+"&amp;item_per_page="+str(item_per_page)
+                outstring += "'>>></a>"
+        else:
+            outstring += "no data!"
+            
         return outstring
     #@+node:2014pythonE.20140410091619.2094: *3* default
     @cherrypy.expose
